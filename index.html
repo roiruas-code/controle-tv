@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Controle">
+<meta name="theme-color" content="#0b0d12">
+<title>Controle Universal</title>
+<link rel="apple-touch-icon" href="icon.png">
+<style>
+:root{
+  --bg:#0b0d12; --panel:#151922; --panel2:#1c212c; --line:#262c39;
+  --txt:#e9edf5; --mut:#8a93a6; --acc:#4f8cff; --acc2:#7aa8ff;
+  --red:#ff4d5e; --green:#2fd38a; --yellow:#ffc24d;
+  --r:22px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}
+body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);overscroll-behavior:none}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+input,select{font:inherit;-webkit-user-select:text;user-select:text}
+.app{max-width:440px;margin:0 auto;padding:14px 18px 24px;min-height:100%;display:flex;flex-direction:column}
+.hidden{display:none!important}
+
+/* header */
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.tvname{display:flex;align-items:center;gap:10px;min-width:0}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--mut);flex:none;box-shadow:0 0 0 4px rgba(138,147,166,.12)}
+.dot.on{background:var(--green);box-shadow:0 0 0 4px rgba(47,211,138,.15)}
+.dot.wait{background:var(--yellow);box-shadow:0 0 0 4px rgba(255,194,77,.15);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.4}}
+.tvname b{font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tvname small{display:block;color:var(--mut);font-size:12px;margin-top:2px}
+.iconbtn{width:42px;height:42px;border-radius:14px;background:var(--panel);display:grid;place-items:center;flex:none}
+.iconbtn svg{width:20px;height:20px}
+
+/* remote */
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.btn{background:var(--panel);border-radius:18px;height:56px;display:grid;place-items:center;transition:transform .08s,background .15s;position:relative}
+.btn:active,.btn.press{transform:scale(.94);background:var(--panel2)}
+.btn svg{width:24px;height:24px}
+.btn.power{background:rgba(255,77,94,.14);color:var(--red);width:56px}
+.btn.round{width:56px;border-radius:50%}
+.label{font-size:11px;color:var(--mut);text-align:center;margin-top:6px;letter-spacing:.02em}
+
+.dpad{position:relative;width:268px;height:268px;margin:22px auto 18px;border-radius:50%;background:radial-gradient(circle at 50% 35%,#1d2330,#141821);box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 20px 40px rgba(0,0,0,.35)}
+.dpad .arrow{position:absolute;width:80px;height:80px;display:grid;place-items:center;border-radius:50%;color:var(--mut)}
+.dpad .arrow:active,.dpad .arrow.press{color:var(--txt);background:rgba(255,255,255,.05)}
+.dpad .arrow svg{width:30px;height:30px}
+.dpad .up{top:6px;left:94px}.dpad .down{bottom:6px;left:94px}
+.dpad .left{left:6px;top:94px}.dpad .right{right:6px;top:94px}
+.dpad .ok{position:absolute;inset:79px;border-radius:50%;background:linear-gradient(180deg,#5b95ff,#3b73e6);font-weight:700;font-size:20px;letter-spacing:.04em;box-shadow:0 10px 24px rgba(79,140,255,.35);transition:transform .08s}
+.dpad .ok:active,.dpad .ok.press{transform:scale(.94)}
+
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.rocker{background:var(--panel);border-radius:28px;width:72px;display:flex;flex-direction:column;align-items:center;overflow:hidden}
+.rocker button{height:64px;width:100%;display:grid;place-items:center;transition:background .12s}
+.rocker button:active,.rocker button.press{background:var(--panel2)}
+.rocker span{font-size:11px;color:var(--mut);font-weight:600;letter-spacing:.08em;padding:4px 0}
+.rocker svg{width:22px;height:22px}
+.mid{display:flex;flex-direction:column;gap:12px;flex:1}
+.media{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
+.media .btn{height:50px}
+.apps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
+.app-b{height:50px;border-radius:16px;font-weight:800;font-size:13px;display:grid;place-items:center;transition:transform .08s}
+.app-b:active{transform:scale(.94)}
+.nf{background:#140405;color:#e50914}.yt{background:#1a0606;color:#ff3d3d}.pv{background:#06141f;color:#2aa7ff}.dp{background:#070c26;color:#7c9bff}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.tabs .btn{height:46px;font-size:14px;font-weight:600;display:flex;gap:8px;align-items:center;justify-content:center}
+.tabs .btn svg{width:18px;height:18px}
+.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.numpad .btn{height:52px;font-size:20px;font-weight:600}
+.kbd{margin-top:12px;display:flex;gap:10px}
+.kbd input{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:0 16px;height:52px;color:var(--txt);outline:none}
+.kbd .btn{width:84px;background:var(--acc);font-weight:700}
+
+/* touchpad */
+.pad{margin:18px auto;width:100%;height:268px;border-radius:28px;background:var(--panel);border:1px solid var(--line);display:grid;place-items:center;color:var(--mut);font-size:13px;text-align:center;touch-action:none;line-height:1.6}
+
+/* setup */
+.setup h1{font-size:28px;margin:18px 0 6px;letter-spacing:-.02em}
+.setup p.sub{color:var(--mut);margin:0 0 22px;font-size:15px;line-height:1.5}
+.brands{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.brand{background:var(--panel);border:2px solid transparent;border-radius:20px;padding:16px 14px;text-align:left;transition:border-color .15s}
+.brand.sel{border-color:var(--acc)}
+.brand b{display:block;font-size:16px}
+.brand small{color:var(--mut);font-size:12px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;color:var(--mut);margin:0 0 8px 4px}
+.field input{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:0 16px;height:54px;color:var(--txt);outline:none;font-size:17px}
+.field input:focus{border-color:var(--acc)}
+.primary{width:100%;height:56px;border-radius:18px;background:var(--acc);font-weight:700;font-size:17px;margin-top:6px}
+.primary:active{filter:brightness(.9)}
+.ghost{width:100%;height:50px;border-radius:16px;background:var(--panel);font-weight:600;margin-top:10px}
+.hint{background:var(--panel);border-radius:18px;padding:14px 16px;font-size:13.5px;color:var(--mut);line-height:1.55;margin-top:16px}
+.hint b{color:var(--txt)}
+.hint a{color:var(--acc2)}
+.saved{margin-top:22px}
+.saved h3{font-size:13px;color:var(--mut);font-weight:600;margin:0 0 10px 4px;text-transform:uppercase;letter-spacing:.08em}
+.tvitem{display:flex;align-items:center;justify-content:space-between;background:var(--panel);border-radius:16px;padding:12px 14px;margin-bottom:8px}
+.tvitem button.go{flex:1;text-align:left}
+.tvitem small{color:var(--mut);display:block;font-size:12px}
+.tvitem .del{color:var(--mut);padding:6px 10px}
+
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:#20263a;border:1px solid var(--line);padding:12px 18px;border-radius:14px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;max-width:90%;text-align:center;z-index:9}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.banner{background:rgba(255,194,77,.1);border:1px solid rgba(255,194,77,.25);color:#ffd88a;border-radius:16px;padding:12px 14px;font-size:13px;line-height:1.5;margin-bottom:12px}
+.banner a{color:#fff;font-weight:700}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ SETUP ============ -->
+  <section id="setup" class="setup">
+    <h1>Controle Universal</h1>
+    <p class="sub">Escolha a marca da TV e informe o IP dela. O iPhone precisa estar no mesmo Wi-Fi da TV.</p>
+
+    <div class="brands" id="brands">
+      <button class="brand" data-b="samsung"><b>Samsung</b><small>Smart TV Tizen</small></button>
+      <button class="brand" data-b="lg"><b>LG</b><small>webOS</small></button>
+      <button class="brand" data-b="roku"><b>Roku TV</b><small>TCL, Semp, AOC, Philco…</small></button>
+      <button class="brand" data-b="other"><b>Outra</b><small>Android/Google TV, Fire TV…</small></button>
+    </div>
+
+    <div id="otherInfo" class="hint hidden">
+      <b>Android TV / Google TV</b> (Sony, Philips, TCL Google TV, Xiaomi): o protocolo dessas TVs não é acessível por navegador. Use o app <b>Google TV</b> da App Store, que já traz controle remoto.<br><br>
+      <b>Fire TV</b>: use o app <b>Amazon Fire TV</b>.<br>
+      <b>Apple TV</b>: Central de Controle do iPhone → ícone de controle remoto.
+    </div>
+
+    <div id="formBox">
+      <div class="field">
+        <label>Nome (opcional)</label>
+        <input id="fName" placeholder="TV da Sala" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>IP da TV</label>
+        <input id="fIp" placeholder="192.168.0.25" inputmode="decimal" autocomplete="off">
+      </div>
+      <button class="primary" id="btnConnect">Conectar</button>
+      <div class="hint" id="ipHint">
+        <b>Onde achar o IP:</b> na TV, abra <b>Configurações → Rede → Status da rede</b> (ou "Informações da rede"). Anote o endereço IP, ex.: 192.168.0.25.
+        <span id="brandHint"></span>
+      </div>
+    </div>
+
+    <div class="saved hidden" id="savedBox">
+      <h3>TVs salvas</h3>
+      <div id="savedList"></div>
+    </div>
+  </section>
+
+  <!-- ============ REMOTE ============ -->
+  <section id="remote" class="hidden" style="display:flex;flex-direction:column">
+    <div class="top">
+      <div class="tvname">
+        <span class="dot" id="dot"></span>
+        <div style="min-width:0"><b id="tvTitle">TV</b><small id="tvStatus">Desconectada</small></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="iconbtn" id="btnReconnect" title="Reconectar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>
+        </button>
+        <button class="iconbtn" id="btnSettings" title="TVs">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div id="certBanner" class="banner hidden"></div>
+
+    <div class="row">
+      <div><button class="btn power" data-k="power"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></svg></button><div class="label">Ligar</div></div>
+      <div><button class="btn round" data-k="source"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M12 17v3M8 20h8"/></svg></button><div class="label">Entrada</div></div>
+      <div><button class="btn round" data-k="menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><div class="label">Menu</div></div>
+      <div><button class="btn round" data-k="info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></button><div class="label">Info</div></div>
+    </div>
+
+    <div id="dpadView">
+      <div class="dpad">
+        <button class="arrow up" data-k="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg></button>
+        <button class="arrow down" data-k="down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+        <button class="arrow left" data-k="left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <button class="arrow right" data-k="right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+        <button class="ok" data-k="ok">OK</button>
+      </div>
+    </div>
+    <div id="padView" class="hidden">
+      <div class="pad" id="pad">Deslize para navegar<br>Toque para OK</div>
+    </div>
+
+    <div class="row" style="align-items:stretch">
+      <div class="rocker">
+        <button data-k="volup" data-rep="1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+        <span>VOL</span>
+        <button data-k="voldown" data-rep="1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+      </div>
+      <div class="mid">
+        <div class="grid3" style="grid-template-columns:1fr 1fr">
+          <div><button class="btn" style="width:100%" data-k="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button><div class="label">Voltar</div></div>
+          <div><button class="btn" style="width:100%" data-k="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg></button><div class="label">Início</div></div>
+        </div>
+        <div><button class="btn" style="width:100%" data-k="mute"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg></button><div class="label">Mudo</div></div>
+      </div>
+      <div class="rocker">
+        <button data-k="chup" data-rep="1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg></button>
+        <span>CH</span>
+        <button data-k="chdown" data-rep="1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+      </div>
+    </div>
+
+    <div class="media">
+      <button class="btn" data-k="rew"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 6v12l-8.5-6zM21 6v12l-8.5-6z"/></svg></button>
+      <button class="btn" data-k="play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l11-7z"/></svg></button>
+      <button class="btn" data-k="pause"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg></button>
+      <button class="btn" data-k="ff"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 6v12l8.5-6zM3 6v12l8.5-6z"/></svg></button>
+    </div>
+
+    <div class="apps">
+      <button class="app-b nf" data-app="netflix">NETFLIX</button>
+      <button class="app-b yt" data-app="youtube">YouTube</button>
+      <button class="app-b pv" data-app="prime">prime</button>
+      <button class="app-b dp" data-app="disney">Disney+</button>
+    </div>
+
+    <div class="tabs">
+      <button class="btn" id="tNum"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="6" cy="6" r="1.8"/><circle cx="12" cy="6" r="1.8"/><circle cx="18" cy="6" r="1.8"/><circle cx="6" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="18" cy="12" r="1.8"/><circle cx="6" cy="18" r="1.8"/><circle cx="12" cy="18" r="1.8"/><circle cx="18" cy="18" r="1.8"/></svg>Números</button>
+      <button class="btn" id="tKbd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>Teclado</button>
+    </div>
+    <button class="ghost" id="tPad" style="height:44px;font-size:14px">Modo touchpad</button>
+
+    <div class="numpad hidden" id="numpad">
+      <button class="btn" data-n="1">1</button><button class="btn" data-n="2">2</button><button class="btn" data-n="3">3</button>
+      <button class="btn" data-n="4">4</button><button class="btn" data-n="5">5</button><button class="btn" data-n="6">6</button>
+      <button class="btn" data-n="7">7</button><button class="btn" data-n="8">8</button><button class="btn" data-n="9">9</button>
+      <button class="btn" data-k="guide" style="font-size:13px">Guia</button><button class="btn" data-n="0">0</button><button class="btn" data-k="exit" style="font-size:13px">Sair</button>
+    </div>
+    <form class="kbd hidden" id="kbd">
+      <input id="kbdIn" placeholder="Digite para enviar à TV" autocomplete="off" autocorrect="off" autocapitalize="off">
+      <button class="btn" type="submit">Enviar</button>
+    </form>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch{ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch{} }
+};
+const isHttps = location.protocol === 'https:';
+let toastT;
+function toast(msg, ms=2400){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'), ms); }
+function setStatus(state, text){
+  const d=$('#dot'); d.className='dot'+(state==='on'?' on':state==='wait'?' wait':'');
+  $('#tvStatus').textContent=text;
+}
+function haptic(){ try{ navigator.vibrate && navigator.vibrate(12); }catch{} }
+
+/* ====================== DRIVERS ====================== */
+
+/* ---------- SAMSUNG (Tizen, 2016+) ---------- */
+class Samsung {
+  constructor(tv){ this.tv=tv; this.ws=null; this.ready=false; }
+  static KEYS = {
+    power:'KEY_POWER', source:'KEY_SOURCE', menu:'KEY_MENU', info:'KEY_INFO',
+    up:'KEY_UP', down:'KEY_DOWN', left:'KEY_LEFT', right:'KEY_RIGHT', ok:'KEY_ENTER',
+    back:'KEY_RETURN', home:'KEY_HOME', exit:'KEY_EXIT', guide:'KEY_GUIDE',
+    volup:'KEY_VOLUP', voldown:'KEY_VOLDOWN', mute:'KEY_MUTE', chup:'KEY_CHUP', chdown:'KEY_CHDOWN',
+    play:'KEY_PLAY', pause:'KEY_PAUSE', ff:'KEY_FF', rew:'KEY_REWIND'
+  };
+  static APPS = { netflix:'3201907018807', youtube:'111299001912', prime:'3201910019365', disney:'3201901017640' };
+  connect(){
+    return new Promise((resolve) => {
+      const name = btoa('Controle Universal');
+      // Página http -> tenta ws:8001 primeiro (sem certificado). Página https -> só wss:8002.
+      const tries = [];
+      if(!isHttps && !this.tv.forceSecure) tries.push(['ws', 8001]);
+      tries.push(['wss', 8002]);
+      const attempt = (i) => {
+        if(i >= tries.length){ resolve(false); return; }
+        const [proto, port] = tries[i];
+        let url = `${proto}://${this.tv.ip}:${port}/api/v2/channels/samsung.remote.control?name=${name}`;
+        if(this.tv.token) url += `&token=${this.tv.token}`;
+        let settled = false, ws;
+        try { ws = new WebSocket(url); } catch(e){ attempt(i+1); return; }
+        this.ws = ws; this.secure = proto === 'wss';
+        const to = setTimeout(() => { if(!settled){ settled=true; try{ws.close()}catch{}; attempt(i+1);} }, proto==='wss' ? 30000 : 5000);
+        ws.onmessage = (ev) => {
+          let m; try{ m = JSON.parse(ev.data); }catch{ return; }
+          if(m.event === 'ms.channel.connect'){
+            if(m.data && m.data.token){ this.tv.token = m.data.token; saveTv(this.tv); }
+            if(!settled){ settled=true; clearTimeout(to); this.ready=true; resolve(true); }
+          } else if(m.event === 'ms.channel.unauthorized'){
+            if(!settled){ settled=true; clearTimeout(to); toast('A TV recusou a conexão. Aceite o pedido na tela da TV.'); resolve(false); }
+          }
+        };
+        ws.onerror = () => { if(!settled){ settled=true; clearTimeout(to); attempt(i+1); } };
+        ws.onclose = () => { this.ready=false; if(settled) onDisconnect(); };
+      };
+      attempt(0);
+    });
+  }
+  send(k){
+    const key = Samsung.KEYS[k] || (k.startsWith('num') ? 'KEY_'+k.slice(3) : null);
+    if(!key || !this.ready) return false;
+    this.ws.send(JSON.stringify({ method:'ms.remote.control', params:{ Cmd:'Click', DataOfCmd:key, Option:'false', TypeOfRemote:'SendRemoteKey' } }));
+    return true;
+  }
+  app(a){
+    if(!this.ready) return false;
+    this.ws.send(JSON.stringify({ method:'ms.channel.emit', params:{ event:'ed.apps.launch', to:'host', data:{ appId:Samsung.APPS[a], action_type:'DEEP_LINK' } } }));
+    return true;
+  }
+  text(t){
+    if(!this.ready) return false;
+    const b64 = btoa(unescape(encodeURIComponent(t)));
+    this.ws.send(JSON.stringify({ method:'ms.remote.control', params:{ Cmd:b64, DataOfCmd:'base64', TypeOfRemote:'SendInputString' } }));
+    this.ws.send(JSON.stringify({ method:'ms.remote.control', params:{ TypeOfRemote:'SendInputEnd' } }));
+    return true;
+  }
+  certUrl(){ return `https://${this.tv.ip}:8002`; }
+  close(){ try{ this.ws && this.ws.close(); }catch{} }
+}
+
+/* ---------- LG (webOS) ---------- */
+class LG {
+  constructor(tv){ this.tv=tv; this.ws=null; this.ptr=null; this.ready=false; this.id=0; this.cbs={}; }
+  static PERMS = ["LAUNCH","LAUNCH_WEBAPP","APP_TO_APP","CLOSE","TEST_OPEN","TEST_PROTECTED","CONTROL_AUDIO","CONTROL_DISPLAY","CONTROL_INPUT_JOYSTICK","CONTROL_INPUT_MEDIA_RECORDING","CONTROL_INPUT_MEDIA_PLAYBACK","CONTROL_INPUT_TV","CONTROL_POWER","CONTROL_TV_SCREEN","READ_APP_STATUS","READ_CURRENT_CHANNEL","READ_INPUT_DEVICE_LIST","READ_NETWORK_STATE","READ_RUNNING_APPS","READ_TV_CHANNEL_LIST","WRITE_NOTIFICATION_TOAST","READ_POWER_STATE","READ_COUNTRY_INFO","CONTROL_INPUT_TEXT","CONTROL_MOUSE_AND_KEYBOARD","READ_INSTALLED_APPS","READ_SETTINGS"];
+  static BTN = { up:'UP', down:'DOWN', left:'LEFT', right:'RIGHT', ok:'ENTER', back:'BACK', home:'HOME', exit:'EXIT', menu:'MENU', info:'INFO', guide:'GUIDE', source:'INPUT_HUB', volup:'VOLUMEUP', voldown:'VOLUMEDOWN', mute:'MUTE', chup:'CHANNELUP', chdown:'CHANNELDOWN', play:'PLAY', pause:'PAUSE', ff:'FASTFORWARD', rew:'REWIND' };
+  static APPS = { netflix:'netflix', youtube:'youtube.leanback.v4', prime:'amazon', disney:'com.disney.disneyplus-prod' };
+  connect(){
+    return new Promise((resolve) => {
+      const tries = [];
+      if(!isHttps && !this.tv.forceSecure) tries.push(['ws', 3000]);
+      tries.push(['wss', 3001]);
+      const attempt = (i) => {
+        if(i >= tries.length){ resolve(false); return; }
+        const [proto, port] = tries[i];
+        let settled=false, ws;
+        try{ ws = new WebSocket(`${proto}://${this.tv.ip}:${port}`); }catch{ attempt(i+1); return; }
+        this.ws = ws; this.secure = proto==='wss';
+        const to = setTimeout(() => { if(!settled){ settled=true; try{ws.close()}catch{}; attempt(i+1);} }, 30000);
+        ws.onopen = () => {
+          setStatus('wait', 'Aceite o pedido na tela da TV…');
+          ws.send(JSON.stringify({ type:'register', id:'register_0', payload:{
+            forcePairing:false, pairingType:'PROMPT', 'client-key': this.tv.token || undefined,
+            manifest:{ manifestVersion:1, appVersion:'1.1',
+              signed:{ appId:'com.lge.test', created:'20140509', vendorId:'com.lge', serial:'2f930e2d2cfe083771f68e4fe7bb07',
+                localizedAppNames:{'':'Controle Universal'}, localizedVendorNames:{'':'Controle Universal'}, permissions:LG.PERMS },
+              permissions:LG.PERMS }
+          }}));
+        };
+        ws.onmessage = (ev) => {
+          let m; try{ m=JSON.parse(ev.data); }catch{ return; }
+          if(m.id==='register_0' && m.type==='registered'){
+            if(m.payload && m.payload['client-key']){ this.tv.token = m.payload['client-key']; saveTv(this.tv); }
+            if(!settled){ settled=true; clearTimeout(to); this.ready=true; this.openPointer(); resolve(true); }
+          } else if(m.id==='register_0' && m.type==='error'){
+            if(!settled){ settled=true; clearTimeout(to); toast('A TV recusou o pareamento.'); resolve(false); }
+          } else if(this.cbs[m.id]){ this.cbs[m.id](m); delete this.cbs[m.id]; }
+        };
+        ws.onerror = () => { if(!settled){ settled=true; clearTimeout(to); attempt(i+1); } };
+        ws.onclose = () => { this.ready=false; if(settled) onDisconnect(); };
+      };
+      attempt(0);
+    });
+  }
+  req(uri, payload, cb){
+    if(!this.ready) return false;
+    const id = 'r' + (++this.id);
+    if(cb) this.cbs[id]=cb;
+    this.ws.send(JSON.stringify({ type:'request', id, uri, payload: payload||{} }));
+    return true;
+  }
+  openPointer(){
+    this.req('ssap://com.webos.service.networkinput/getPointerInputSocket', {}, (m) => {
+      const p = m.payload && m.payload.socketPath; if(!p) return;
+      try{ this.ptr = new WebSocket(p); this.ptr.onclose = () => { this.ptr=null; }; }catch{}
+    });
+  }
+  btn(name){
+    if(this.ptr && this.ptr.readyState===1){ this.ptr.send(`type:button\nname:${name}\n\n`); return true; }
+    return false;
+  }
+  move(dx, dy){ if(this.ptr && this.ptr.readyState===1) this.ptr.send(`type:move\ndx:${dx}\ndy:${dy}\ndown:0\n\n`); }
+  click(){ if(this.ptr && this.ptr.readyState===1) this.ptr.send(`type:click\n\n`); }
+  send(k){
+    if(!this.ready) return false;
+    if(k==='power') return this.req('ssap://system/turnOff');
+    if(k.startsWith('num')) return this.btn(k.slice(3));
+    // ações com fallback direto via SSAP caso o socket de botões não esteja pronto
+    const ssap = { volup:'ssap://audio/volumeUp', voldown:'ssap://audio/volumeDown', chup:'ssap://tv/channelUp', chdown:'ssap://tv/channelDown', play:'ssap://media.controls/play', pause:'ssap://media.controls/pause', ff:'ssap://media.controls/fastForward', rew:'ssap://media.controls/rewind' };
+    const b = LG.BTN[k];
+    if(b && this.btn(b)) return true;
+    if(k==='mute'){ this.muted=!this.muted; return this.req('ssap://audio/setMute', { mute:this.muted }); }
+    if(k==='home') return this.req('ssap://system.launcher/launch', { id:'com.webos.app.home' });
+    if(ssap[k]) return this.req(ssap[k]);
+    if(!this.ptr) this.openPointer();
+    return false;
+  }
+  app(a){ return this.req('ssap://system.launcher/launch', { id: LG.APPS[a] }); }
+  text(t){ this.req('ssap://com.webos.service.ime/insertText', { text:t, replace:0 }); return this.req('ssap://com.webos.service.ime/sendEnterKey'); }
+  certUrl(){ return `https://${this.tv.ip}:3001`; }
+  close(){ try{ this.ptr && this.ptr.close(); }catch{} try{ this.ws && this.ws.close(); }catch{} }
+}
+
+/* ---------- ROKU (ECP) ---------- */
+class Roku {
+  constructor(tv){ this.tv=tv; this.ready=false; }
+  static KEYS = { power:'Power', source:'InputHDMI1', menu:'Info', info:'Info', up:'Up', down:'Down', left:'Left', right:'Right', ok:'Select', back:'Back', home:'Home', exit:'Home', guide:'Search', volup:'VolumeUp', voldown:'VolumeDown', mute:'VolumeMute', chup:'ChannelUp', chdown:'ChannelDown', play:'Play', pause:'Play', ff:'Fwd', rew:'Rev' };
+  static APPS = { netflix:'12', youtube:'837', prime:'13', disney:'291097' };
+  base(){ return `http://${this.tv.ip}:8060`; }
+  post(path){ return fetch(this.base()+path, { method:'POST', mode:'no-cors' }).then(()=>true).catch(()=>false); }
+  async connect(){
+    if(isHttps){ return false; }
+    try{
+      const ctrl = new AbortController(); const t = setTimeout(()=>ctrl.abort(), 4000);
+      await fetch(this.base()+'/query/device-info', { mode:'no-cors', signal:ctrl.signal });
+      clearTimeout(t); this.ready=true; return true;
+    }catch{ return false; }
+  }
+  send(k){
+    const key = Roku.KEYS[k] || (k.startsWith('num') ? 'Lit_'+k.slice(3) : null);
+    if(!key) return false;
+    this.post('/keypress/'+key).then(ok => { if(!ok) toast('Sem resposta da TV'); });
+    return true;
+  }
+  app(a){ this.post('/launch/'+Roku.APPS[a]); return true; }
+  async text(t){ for(const ch of t){ await this.post('/keypress/Lit_'+encodeURIComponent(ch)); } return true; }
+  certUrl(){ return null; }
+  close(){}
+}
+
+/* ====================== STATE ====================== */
+let tvs = store.get('tvs', []);
+let current = null, driver = null, selBrand = null;
+function saveTv(tv){ const i = tvs.findIndex(x=>x.id===tv.id); if(i>=0) tvs[i]=tv; else tvs.push(tv); store.set('tvs', tvs); store.set('last', tv.id); }
+const Drivers = { samsung:Samsung, lg:LG, roku:Roku };
+const brandName = { samsung:'Samsung', lg:'LG', roku:'Roku TV' };
+
+/* ====================== SETUP UI ====================== */
+const brandHints = {
+  samsung:'<br><br><b>Samsung:</b> ao conectar pela primeira vez, a TV mostra um aviso pedindo permissão — escolha <b>Permitir</b>. Se não aparecer, vá em Configurações → Geral → Gerenciador de dispositivos externos → Gerenciador de conexão de dispositivos e ative.',
+  lg:'<br><br><b>LG:</b> ao conectar, aceite o pedido na tela da TV. Em Configurações → Geral → Dispositivos → <b>LG Connect Apps</b> deve estar ligado (ou "Ligar via Wi-Fi/Mobile" em modelos novos).',
+  roku:'<br><br><b>Roku:</b> em Configurações → Sistema → Configurações avançadas → <b>Controle por apps móveis</b>, deixe em "Permitido" ou "Padrão".'
+};
+function renderBrands(){
+  $$('.brand').forEach(b => b.classList.toggle('sel', b.dataset.b===selBrand));
+  const other = selBrand==='other';
+  $('#otherInfo').classList.toggle('hidden', !other);
+  $('#formBox').classList.toggle('hidden', other);
+  $('#brandHint').innerHTML = brandHints[selBrand] || '';
+}
+$$('.brand').forEach(b => b.onclick = () => { selBrand=b.dataset.b; renderBrands(); });
+
+function renderSaved(){
+  const box=$('#savedBox'), list=$('#savedList');
+  box.classList.toggle('hidden', !tvs.length);
+  list.innerHTML='';
+  tvs.forEach(tv => {
+    const el=document.createElement('div'); el.className='tvitem';
+    el.innerHTML = `<button class="go"><b></b><small></small></button><button class="del">✕</button>`;
+    el.querySelector('b').textContent = tv.name;
+    el.querySelector('small').textContent = `${brandName[tv.brand]} · ${tv.ip}`;
+    el.querySelector('.go').onclick = () => openRemote(tv);
+    el.querySelector('.del').onclick = () => { tvs=tvs.filter(x=>x.id!==tv.id); store.set('tvs',tvs); renderSaved(); };
+    list.appendChild(el);
+  });
+}
+
+$('#btnConnect').onclick = () => {
+  if(!selBrand){ toast('Escolha a marca da TV'); return; }
+  const ip = $('#fIp').value.trim().replace(/^https?:\/\//,'').replace(/[:/].*$/,'');
+  if(!/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)){ toast('IP inválido. Ex.: 192.168.0.25'); return; }
+  const existing = tvs.find(t=>t.ip===ip && t.brand===selBrand);
+  const tv = existing || { id: Date.now().toString(36), brand:selBrand, ip, name: $('#fName').value.trim() || `TV ${brandName[selBrand]}` };
+  if($('#fName').value.trim()) tv.name = $('#fName').value.trim();
+  saveTv(tv);
+  openRemote(tv);
+};
+
+/* ====================== REMOTE UI ====================== */
+function showSetup(){ $('#remote').classList.add('hidden'); $('#setup').classList.remove('hidden'); renderSaved(); }
+function showRemote(){ $('#setup').classList.add('hidden'); $('#remote').classList.remove('hidden'); }
+
+async function openRemote(tv){
+  if(driver) driver.close();
+  current = tv; store.set('last', tv.id);
+  showRemote();
+  $('#tvTitle').textContent = tv.name;
+  $('#certBanner').classList.add('hidden');
+  connect();
+}
+let connecting=false;
+async function connect(){
+  if(!current || connecting) return;
+  connecting = true;
+  if(driver) driver.close();
+  driver = new Drivers[current.brand](current);
+  setStatus('wait', 'Conectando…');
+  const ok = await driver.connect();
+  connecting = false;
+  if(ok){
+    setStatus('on', `Conectada · ${current.ip}`);
+    $('#certBanner').classList.add('hidden');
+    haptic();
+  } else {
+    setStatus('off', 'Não conectou — toque em ↻');
+    showHelp();
+  }
+}
+function showHelp(){
+  const b = $('#certBanner');
+  if(current.brand==='roku' && isHttps){
+    b.innerHTML = 'Roku só funciona com o app aberto em <b>http://</b> (sem o "s"). Abra o endereço deste app trocando https por http.';
+  } else if(current.brand!=='roku'){
+    const url = driver.certUrl();
+    b.innerHTML = `Não foi possível conectar. Confira: TV ligada, mesmo Wi-Fi e IP correto.<br><br>Se a TV for um modelo mais novo, autorize a conexão segura uma vez: abra <a href="${url}" target="_blank" rel="noopener">${url}</a>, toque em <b>Mostrar detalhes → visitar este site</b>, volte aqui e toque em ↻.`;
+  } else {
+    b.innerHTML = 'Não foi possível conectar. Confira: TV ligada, mesmo Wi-Fi, IP correto e "Controle por apps móveis" permitido.';
+  }
+  b.classList.remove('hidden');
+}
+function onDisconnect(){ if(current) setStatus('off', 'Desconectada — toque em ↻'); }
+
+function press(k){
+  haptic();
+  if(!driver || !driver.ready){ toast('TV desconectada. Toque em ↻'); if(!connecting) connect(); return; }
+  const ok = driver.send(k);
+  if(ok===false) toast('Comando não suportado nesta TV');
+}
+
+// Botões com repetição ao segurar (volume/canal)
+$$('[data-k]').forEach(el => {
+  const k = el.dataset.k, rep = el.dataset.rep;
+  let t1, t2, fired;
+  const start = (e) => {
+    e.preventDefault(); el.classList.add('press'); fired=false;
+    if(rep){
+      press(k); fired=true;
+      t1 = setTimeout(()=>{ t2 = setInterval(()=>press(k), 140); }, 420);
+    }
+  };
+  const end = (e) => {
+    e.preventDefault(); el.classList.remove('press'); clearTimeout(t1); clearInterval(t2);
+    if(!rep && e.type!=='pointercancel' && e.type!=='pointerleave') press(k);
+  };
+  el.addEventListener('pointerdown', start);
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointercancel', ()=>{ el.classList.remove('press'); clearTimeout(t1); clearInterval(t2); });
+  el.addEventListener('pointerleave', ()=>{ el.classList.remove('press'); clearTimeout(t1); clearInterval(t2); });
+});
+$$('[data-n]').forEach(el => el.onclick = () => press('num'+el.dataset.n));
+$$('[data-app]').forEach(el => el.onclick = () => {
+  haptic();
+  if(!driver || !driver.ready){ toast('TV desconectada. Toque em ↻'); return; }
+  driver.app(el.dataset.app); toast('Abrindo '+el.textContent+'…', 1400);
+});
+
+$('#tNum').onclick = () => { $('#numpad').classList.toggle('hidden'); $('#kbd').classList.add('hidden'); };
+$('#tKbd').onclick = () => { $('#kbd').classList.toggle('hidden'); $('#numpad').classList.add('hidden'); if(!$('#kbd').classList.contains('hidden')) $('#kbdIn').focus(); };
+$('#kbd').onsubmit = (e) => {
+  e.preventDefault(); const v=$('#kbdIn').value; if(!v) return;
+  if(!driver || !driver.ready){ toast('TV desconectada'); return; }
+  driver.text(v); $('#kbdIn').value=''; toast('Texto enviado');
+};
+$('#btnReconnect').onclick = () => connect();
+$('#btnSettings').onclick = () => { selBrand=null; renderBrands(); showSetup(); };
+
+/* Touchpad: deslizar = setas, toque = OK (LG usa ponteiro real) */
+let padMode = false;
+$('#tPad').onclick = () => {
+  padMode=!padMode;
+  $('#padView').classList.toggle('hidden', !padMode);
+  $('#dpadView').classList.toggle('hidden', padMode);
+  $('#tPad').textContent = padMode ? 'Modo setas' : 'Modo touchpad';
+};
+(() => {
+  const pad=$('#pad'); let sx, sy, lx, ly, moved, acc={x:0,y:0};
+  pad.addEventListener('pointerdown', e => { sx=lx=e.clientX; sy=ly=e.clientY; moved=false; acc={x:0,y:0}; pad.setPointerCapture(e.pointerId); });
+  pad.addEventListener('pointermove', e => {
+    if(sx==null) return;
+    const dx=e.clientX-lx, dy=e.clientY-ly; lx=e.clientX; ly=e.clientY;
+    if(Math.abs(e.clientX-sx)>8 || Math.abs(e.clientY-sy)>8) moved=true;
+    if(current && current.brand==='lg' && driver && driver.ptr){ driver.move(Math.round(dx*1.6), Math.round(dy*1.6)); return; }
+    acc.x+=dx; acc.y+=dy; const step=46;
+    if(Math.abs(acc.x)>step){ press(acc.x>0?'right':'left'); acc.x=0; acc.y=0; }
+    else if(Math.abs(acc.y)>step){ press(acc.y>0?'down':'up'); acc.x=0; acc.y=0; }
+  });
+  pad.addEventListener('pointerup', () => {
+    if(!moved){ if(current && current.brand==='lg' && driver && driver.ptr){ haptic(); driver.click(); } else press('ok'); }
+    sx=null;
+  });
+})();
+
+// Reconectar ao voltar para o app
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState==='visible' && current && !$('#remote').classList.contains('hidden') && (!driver || !driver.ready)) connect();
+});
+
+/* ====================== INIT ====================== */
+const last = tvs.find(t=>t.id===store.get('last'));
+if(last) openRemote(last); else showSetup();
+})();
+</script>
+</body>
+</html>
